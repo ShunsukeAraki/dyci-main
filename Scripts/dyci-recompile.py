@@ -55,10 +55,22 @@ def copyResource(source, dyci):
     # Searching, if it is localizable resource or not
     resource_directory = basename(dirname(source))
     if (resource_directory[-5:] == "lproj"):
-        shutil.copy(source, bundlePath + "/" + resource_directory)
+        if (source[-12:] == ".storyboardc"):
+            sbPath = bundlePath + "/" + resource_directory + "/" + basename(source)
+            if os.path.exists(sbPath):
+                shutil.rmtree(sbPath)
+            shutil.copytree(source, sbPath)
+        else:
+            shutil.copy(source, bundlePath + "/" + resource_directory)
         stdout.write("File " + source + " was successfully copied to application -> " + bundlePath + "/" + resource_directory)
     else:    
-        shutil.copy(source, bundlePath)
+        if (source[-12:] == ".storyboardc"):
+            sbPath = bundlePath + "/" + basename(source)
+            if os.path.exists(sbPath):
+                shutil.rmtree(sbPath)
+            shutil.copytree(source, sbPath)
+        else:
+            shutil.copy(source, bundlePath)
         stdout.write("File " + source + " was successfully copied to application -> " + bundlePath)
 
     try:
@@ -100,6 +112,14 @@ if filename[-4:] == ".xib":
     runAndFailOnError(["ibtool", "--compile", xibFilename, filename])
     resultCode = copyResource(xibFilename, DYCI_ROOT_DIR)
     os.unlink(xibFilename)
+    exit(resultCode)
+
+#In case of storyboards
+if filename[-11:] == ".storyboard": 
+    sbFilename = os.path.splitext(filename)[0] + ".storyboardc"
+    runAndFailOnError(["ibtool", "--compile", sbFilename, filename])
+    resultCode = copyResource(sbFilename, DYCI_ROOT_DIR)
+    shutil.rmtree(sbFilename)
     exit(resultCode)
 
 # In case of header files
